@@ -32,6 +32,11 @@
     - demon (`dockerd`)
     - tworzy, zarządza obrazami, kontenerami, sieciami i volumes (kłębami?)
   - REST API - gada z demonem
+    - **docker.rest.get.images.sh**
+      ```sh
+      #!/bin/sh
+      curl --unix-socket /var/run/docker.sock localhost/images/json
+      ```
   - CLI - client - gada z demonem poprzez REST API (`docker`)
 
 - Images and Containers
@@ -66,7 +71,7 @@
 - run `docker info`
 - run `docker run hello-world`
 
-```shell
+```sh
 ## List Docker CLI commands
 docker
 docker container --help
@@ -118,13 +123,15 @@ CMD ["npm", "start"]
 ```
 
 #### Build the app
-```shell
+```
 docker build --tag=nodemongo .
 ```
-- `docker image ls`
+```
+docker image ls
+```
 
 #### Run the app
-```shell
+```
 docker run -p 4000:3000 nodemongo
 ```
 ```
@@ -136,6 +143,7 @@ docker container stop <hash>
 
 #### Sharing is caring
 [Docker Hub](https://hub.docker.com/)
+Login to docker hub
 ```
 docker login
 ```
@@ -143,10 +151,33 @@ docker login
 docker tag image username/repository:tag
 ```
 ```
+docker image ls
+```
+```
 docker push username/repository:tag
 ```
 ```
 docker run -p 4000:80 username/repository:tag
+```
+
+#### Recap
+```sh
+docker build -t friendlyhello .  # Create image using this directory's Dockerfile
+docker run -p 4000:80 friendlyhello  # Run "friendlyhello" mapping port 4000 to 80
+docker run -d -p 4000:80 friendlyhello         # Same thing, but in detached mode
+docker container ls                                # List all running containers
+docker container ls -a             # List all containers, even those not running
+docker container stop <hash>           # Gracefully stop the specified container
+docker container kill <hash>         # Force shutdown of the specified container
+docker container rm <hash>        # Remove specified container from this machine
+docker container rm $(docker container ls -a -q)         # Remove all containers
+docker image ls -a                             # List all images on this machine
+docker image rm <image id>            # Remove specified image from this machine
+docker image rm $(docker image ls -a -q)   # Remove all images from this machine
+docker login             # Log in this CLI session using your Docker credentials
+docker tag <image> username/repository:tag  # Tag <image> for upload to registry
+docker push username/repository:tag            # Upload tagged image to registry
+docker run username/repository:tag                   # Run image from a registry
 ```
 
 ## Services, Swarm and Docker Compose
