@@ -203,38 +203,84 @@ docker service ls
 #### [Example](https://github.com/madhums/node-express-mongoose-demo)
 
 ```yml
-version: "3.2"
+version: "3"
 
 services:
-  node:
-    build:
-      context: .
-      dockerfile: ./docker/node/Dockerfile
+  client:
+    image: adrianmuchavazco/example_client
+    build: ./client
     volumes:
-      - .:/app
-      - /app/node_modules
+      - ./client:/app
     command: npm start
     env_file:
       - .env
     ports:
       - 3000:3000
     depends_on:
+      - server
+    deploy:
+      replicas: 3
+    networks:
+      - webnet
+
+  server:
+    image: adrianmuchavazco/example_server
+    build: ./server
+    volumes:
+      - ./server:/app
+    command: npm start
+    env_file:
+      - .env
+    ports:
+      - 4000:3000
+    depends_on:
       - mongo
+    deploy:
+      replicas: 5
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+    networks:
+      - webnet
+
   express:
     image: mongo-express
     ports:
       - 8081:8081
     depends_on:
       - mongo
+    networks:
+      - webnet
+
   mongo:
     image: mongo
     restart: always
     volumes:
       - ./data:/data/db
+    networks:
+      - webnet
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - webnet
+
+networks:
+  webnet:
 ```
 
 #### Deploy
-  - `docker stack deploy -c docker-compose.yml mongo`
+  - `docker stack deploy -c docker-compose.yml example`
 
   or
   - `docker-compose -f docker-compose.yml up`

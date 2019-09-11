@@ -1,5 +1,6 @@
 var express = require("express");
 var router = express.Router();
+var os = require('os');
 
 var MongoClient = require("mongodb").MongoClient;
 var url = "mongodb://mongo/mydb";
@@ -14,8 +15,10 @@ router.get("/", function(req, res, next) {
       console.log("Collection created!");
     });
 
-    dbo.collection("customers").find({}, function(err, result) {
-      res.json(err || result);
+    var query = {};
+    dbo.collection("customers").find(query).toArray(function(err, result) {
+      result.push(os.hostname())
+      res.json(result);
       db.close();
     });
   });
