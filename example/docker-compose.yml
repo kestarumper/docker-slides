@@ -5,7 +5,9 @@ services:
     image: adrianmuchavazco/example_client
     build: ./client
     volumes:
-      - ./client:/app
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/build
     command: npm start
     env_file:
       - .env
@@ -22,7 +24,8 @@ services:
     image: adrianmuchavazco/example_server
     build: ./server
     volumes:
-      - ./server:/app
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
     command: npm start
     env_file:
       - .env

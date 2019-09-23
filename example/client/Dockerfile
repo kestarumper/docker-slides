@@ -1,10 +1,12 @@
 FROM node:10.12.0-alpine
 
-WORKDIR /app
-RUN ["pwd"]
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+RUN npm install
+
 COPY . .
-RUN npm ci
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD [ "npm", "start" ]

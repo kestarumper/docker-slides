@@ -1,0 +1,34 @@
+version: "3"
+
+services:
+  client:
+    image: adrianmuchavazco/example_client
+    context: ./client
+    build: ./client/Dockerfile.prod
+    command: npm run deploy
+    deploy:
+      replicas: 3
+
+  server:
+    command: npm start
+    deploy:
+      replicas: 5
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+    networks:
+      - webnet
+
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - ./data:/data/db
+    networks:
+      - webnet
+
+networks:
+  webnet:

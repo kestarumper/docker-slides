@@ -3,14 +3,14 @@ import logo from './logo.svg';
 import './App.css';
 
 function App() {
-  const [data, setData] = useState({})
+  const [data, setData] = useState()
 
   useEffect(() => {
     fetch("http://localhost:4000/users")
       .then(res => res.json())
       .then(setData)
       .catch(console.error)
-  }, [data])
+  }, [])
 
   return (
     <div className="App">
