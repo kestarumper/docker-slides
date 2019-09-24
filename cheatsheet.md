@@ -6,11 +6,11 @@
 
   - Selling points
 
-    - _Dopasowują się_: Nawet skomplikowane aplikacje mogą zostać skonteneryzowane.
-    - _Lekkie_: Współdzielą kernel.
-    - _Wymienne_: Wydawanie aktualizacji w locie.
-    - _Przenoszalne_: Buduj lokalnie, wysyłaj do chmury, uruchom wszędzie.
-    - _Skalowalne_: Replikacja.
+    - **Dopasowują się**: Nawet skomplikowane aplikacje mogą zostać skonteneryzowane.
+    - **Lekkie**: Współdzielą kernel.
+    - **Wymienne**: Wydawanie aktualizacji w locie.
+    - **Przenoszalne**: Buduj lokalnie, wysyłaj do chmury, uruchom wszędzie.
+    - **Skalowalne**: Replikacja, load balance
 
   - Docker flow
 
@@ -21,9 +21,9 @@
 - Containers and virtual machines
 
   - Oddzielenie aplikacji od infrastruktury
-  - kontenery są _lekkie_ bo nie potrzebują _hypervisora_
-  - pozwala na uruchomienie aplikacji w _odizolowanym środowisku_ zwanym kontenerem
-  - _izolacja_ i _bezpieczeństwo_ pozwala na uruchamianie wielu kontenerów na jednym hoście
+  - kontenery są **lekkie** bo nie potrzebują **hypervisora**, mają dostęp bezpośrednio do **kernela**
+  - pozwala na uruchomienie aplikacji w **odizolowanym środowisku** zwanym kontenerem
+  - **izolacja** i **bezpieczeństwo** pozwala na uruchamianie wielu kontenerów na jednym hoście
   - szybki deploy
 
 - Docker Engine
@@ -41,23 +41,28 @@
 
 - Images and Containers
 
-  - **Image** zawiera wszystko co potrzebne do uruchomienia kontenera
+  - **Image** zawiera wszystko co potrzebne do uruchomienia kontenera. _Jest przepisem na stworzenie kontenera._
     - kod
     - środowisko uruchomieniowe
     - biblioteki
     - zmienne środowiskowe
     - pliki konfiguracyjne
+    - składa się z **warstw**
   - **Container** jest konkretną instancją danego obrazu
 
     - jest tym czym staje się **Image** gdy go wykonamy
     - zawiera stan
     - create, start, stop. move, delete
-    - jest odizolowany, można to kontrolować jak bardzo
+    - jest odizolowany, można to kontrolować jak bardzo, np. które porty są dostępne na zewnątrz
 
   - Docker registry
-    - stores docker images
-    - Docker Hub - public registry anyone can use
-    - you can run private registry
+    - zawiera obrazy dockera
+    - **Docker Hub** - publiczne repozytorium, które każdy może używać
+    - można założyć własne prywatne repozytorium
+
+- Volumes (kłęby)
+  - Volumes can be more safely shared among multiple containers.
+  - In addition, volumes are often a better choice than persisting data in a container’s writable layer, because a volume does not increase the size of the containers using it, and the volume’s contents exist outside the lifecycle of a given container.
 
 ## Get started with Docker
 
@@ -96,6 +101,7 @@ docker container ls -aq
 ### Part 2: Containers
 
 #### Define a container with `Dockerfile`
+
 - definiuje co się dzieje w srodowisku wewnatrz kontenera
 - dostep do zasobow (sieć, dysk)
 - mapowanie portów
@@ -108,12 +114,13 @@ FROM node:10.12.0-alpine
 # Set working directory to /src
 WORKDIR /app
 
+# Install node_modules
+COPY package*.json ./
+RUN npm install
+
 # Copy from our machine to container
 # COPY [local path] [container path]
 COPY . .
-
-# Install node_modules
-RUN npm ci
 
 # Expose container port to outside world
 EXPOSE 3000
@@ -123,44 +130,56 @@ CMD ["npm", "start"]
 ```
 
 #### Build the app
+
 ```
-docker build --tag=nodemongo .
+docker build --tag=example_client .
 ```
+
 ```
 docker image ls
 ```
 
 #### Run the app
+
 ```
-docker run -p 4000:3000 nodemongo
+docker run -p 3000:3000 example_client
 ```
+
 ```
 docker container ls
 ```
+
 ```
 docker container stop <hash>
 ```
 
 #### Sharing is caring
+
 [Docker Hub](https://hub.docker.com/)
 Login to docker hub
+
 ```
 docker login
 ```
+
 ```
 docker tag image username/repository:tag
 ```
+
 ```
 docker image ls
 ```
+
 ```
 docker push username/repository:tag
 ```
+
 ```
 docker run -p 4000:80 username/repository:tag
 ```
 
 #### Recap
+
 ```sh
 docker build -t friendlyhello .  # Create image using this directory's Dockerfile
 docker run -p 4000:80 friendlyhello  # Run "friendlyhello" mapping port 4000 to 80
@@ -183,12 +202,15 @@ docker run username/repository:tag                   # Run image from a registry
 ## Services, Swarm and Docker Compose
 
 ### Services and Swarm
+
 ```
 docker swarm init
 ```
+
 ```
-docker stack deploy -c docker-compose.yml getstartedlab
+docker stack deploy -c docker-compose.yml example
 ```
+
 ```
 docker service ls
 ```
@@ -196,7 +218,8 @@ docker service ls
 ### Docker compose
 
 #### Three-step process
-- Definiujemy `Dockerfile` by móc  wszędzie zreprodukować aplikację
+
+- Definiujemy `Dockerfile` by móc wszędzie zreprodukować aplikację
 - Definiujemy usługi w `docker-compose.yml` by mogły współdziałać razem w odizolowanym środowisku
 - Uruchamiamy `docker-compose up`, który startuje całą aplikację
 
@@ -210,7 +233,9 @@ services:
     image: adrianmuchavazco/example_client
     build: ./client
     volumes:
-      - ./client:/app
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/build
     command: npm start
     env_file:
       - .env
@@ -227,7 +252,8 @@ services:
     image: adrianmuchavazco/example_server
     build: ./server
     volumes:
-      - ./server:/app
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
     command: npm start
     env_file:
       - .env
@@ -280,13 +306,17 @@ networks:
 ```
 
 #### Deploy
-  - `docker stack deploy -c docker-compose.yml example`
 
-  or
-  - `docker-compose -f docker-compose.yml up`
+- `docker stack deploy -c docker-compose.yml example`
+
+or
+
+- `docker-compose -f docker-compose.yml up`
 
 #### Different environments
+
 - **docker-compose.yml**
+
   ```yml
   web:
     image: example/my_web_app:latest
@@ -302,18 +332,19 @@ networks:
   ```
 
 - **docker-compose.override.yml**
+
   ```yml
   web:
     build: .
     volumes:
-      - '.:/code'
+      - ".:/code"
     ports:
       - 8883:80
     environment:
-      DEBUG: 'true'
+      DEBUG: "true"
 
   db:
-    command: '-d'
+    command: "-d"
     ports:
       - 5432:5432
 
@@ -321,17 +352,19 @@ networks:
     ports:
       - 6379:6379
   ```
+
 - **docker-compose.prod.yml**
+
   ```yml
   web:
   ports:
     - 80:80
   environment:
-    PRODUCTION: 'true'
+    PRODUCTION: "true"
 
   cache:
     environment:
-      TTL: '500'
+      TTL: "500"
   ```
 
 - deploy to production `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
