@@ -107,7 +107,7 @@ docker container ls -aq
 - mapowanie portów
 - kopiowanie plików do kontenera
 
-```docker
+```dockerfile
 # Use an official Node runtime as a parent image
 FROM node:10.12.0-alpine
 
